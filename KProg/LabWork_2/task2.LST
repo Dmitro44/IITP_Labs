@@ -1,0 +1,42 @@
+  ADDR B1 B2 B3 B4 C:\Study\2 course\Assembler\LabWork_2\task2.asm  PAGE       1
+
+                           org $8000
+                   start:
+  8000 CE 82 00            ldx #$8200
+  8003 18 CE 00 00         ldy #0
+
+                   loop:
+  8007 A6 00               ldaa 0,X
+  8009 C6 08               ldab #8
+
+                   check_bits:
+  800B 44                  lsra
+  800C 24 0B               bcc zero_bit
+  800E 5A                  decb
+  800F 26 FA               bne check_bits
+
+  8011 08                  inx
+  8012 8C 82 1F            cpx #$821f
+  8015 26 F0               bne loop
+
+  8017 20 0B               bra done
+
+                   zero_bit:
+  8019 18 08               iny
+  801B 5A                  decb
+  801C 26 ED               bne check_bits
+
+  801E 08                  inx
+  801F 8C 82 1F            cpx #$821f
+  8022 26 E3               bne loop
+
+                   done:
+  8024 3F                  swi
+
+  Symbol Table 
+
+  DONE               8024
+  CHECK_BITS         800B
+  ZERO_BIT           8019
+  START              8000
+  LOOP               8007
