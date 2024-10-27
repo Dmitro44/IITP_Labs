@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>_353503_Sebelev_Lab6</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="353503_Sebelev_Lab6">
+        <HintPath>bin\Debug\net8.0\353503_Sebelev_Lab6.dll</HintPath>
+      </Reference>
+      <Reference Include="ClassLibrary">
+        <HintPath>..\ClassLibrary\bin\Debug\net8.0\ClassLibrary.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="bin\Debug\net8.0\ClassLibrary.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="bin\Debug\net8.0\" />
+    </ItemGroup>
+
+</Project>

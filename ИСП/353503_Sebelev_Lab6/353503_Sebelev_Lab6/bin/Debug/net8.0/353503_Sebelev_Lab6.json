@@ -1,0 +1,32 @@
+[
+  {
+    "Age": 29,
+    "IsRemoteWork": true,
+    "Name": "Ivan"
+  },
+  {
+    "Age": 45,
+    "IsRemoteWork": false,
+    "Name": "Petr"
+  },
+  {
+    "Age": 21,
+    "IsRemoteWork": true,
+    "Name": "Andrey"
+  },
+  {
+    "Age": 37,
+    "IsRemoteWork": false,
+    "Name": "Vladimir"
+  },
+  {
+    "Age": 25,
+    "IsRemoteWork": true,
+    "Name": "Daniil"
+  },
+  {
+    "Age": 31,
+    "IsRemoteWork": false,
+    "Name": "Kirill"
+  }
+]

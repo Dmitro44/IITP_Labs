@@ -1,0 +1,16 @@
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\bin\Debug\net8.0\353503_Sebelev_Lab6.exe
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\bin\Debug\net8.0\353503_Sebelev_Lab6.deps.json
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\bin\Debug\net8.0\353503_Sebelev_Lab6.runtimeconfig.json
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\bin\Debug\net8.0\353503_Sebelev_Lab6.pdb
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.AssemblyInfoInputs.cache
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.AssemblyInfo.cs
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.csproj.CoreCompileInputs.cache
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.dll
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\refint\353503_Sebelev_Lab6.dll
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.pdb
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.genruntimeconfig.cache
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\ref\353503_Sebelev_Lab6.dll
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_Sebelev_Lab6.csproj.AssemblyReference.cache
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\obj\Debug\net8.0\353503_S.BC9CA14F.Up2Date
+C:\Users\Dima\RiderProjects\353503_Sebelev_Lab6\353503_Sebelev_Lab6\bin\Debug\net8.0\ClassLibrary.pdb
