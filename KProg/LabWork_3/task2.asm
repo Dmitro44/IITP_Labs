@@ -16,6 +16,7 @@
     foundNumberError db 0dh, 0ah, "number was found in input string$"
     foundDollarError db 0dh, 0ah, "dollar sign was found in input string$"
     emptyInputError db 0dh, 0ah, "empty input string$"
+    modifiedString db 0dh, 0ah, "modified string:$"
     newline db 0dh, 0ah, "$"
  
 .code
@@ -87,27 +88,40 @@ get_word_to_add:
     mov ah, 09h
     int 21h
                 
-    xor dx, dx            
-    sub al, dl  ;???  
+    ;xor dx, dx            
+    ;sub al, dl  ;???  
                 ;???
-    xor cx, cx  ;???
-    mov cl, al  ;???
-    inc cx      ;???
+    ;xor cx, cx  ;???
+    ;mov cl, al  ;???
+    ;inc cx      ;???
  
     call insert_word
- 
+    ;cmp bx, 1
+    ;je end_of_program
+
+show_new_string:
+    lea dx, newline
+    mov ah, 09h
+    int 21h
+    
+    lea dx, modifiedString
+    mov ah, 09h
+    int 21h
+    
     lea dx, newline
     mov ah, 09h
     int 21h
  
     ; Print the modified input_string
-    lea dx, input_string + 2
+    lea dx, input_string + 3
     mov ah, 09h
     int 21h
- 
+    
+end_of_program:
     ; End of main procedure
     mov ax, 4C00h
     int 21h
+    
 main endp
  
 check_input proc
@@ -141,11 +155,6 @@ print_dollar_error:
     int 21h
     ret
  
-;empty_input:
-;    cmp di, 0       ; Check if initial length was 0
-;    je empty_message
-;    ret
- 
 empty_message:
     mov di, 1
     lea dx, emptyInputError
@@ -160,6 +169,17 @@ check_input endp
 is_that_a_word proc
     jnz return 
     
+has_space_after:
+    mov al, [si]
+    cmp al, ' '
+    je has_space_before
+    
+    
+    add si, cx
+return:
+    ret
+    
+has_space_before:
     mov cl, target_word[1]
     add cx, 1
     sub si, cx
@@ -167,10 +187,6 @@ is_that_a_word proc
     cmp al, ' '
     je word_found
     
-    add si, cx
-    
-return:
-    ret
     
 is_that_a_word endp
 
@@ -184,18 +200,24 @@ searching:
     mov cl, target_word[1]
     repe cmpsb
     call is_that_a_word
-    ;jz smth_found
     pop di
     pop cx
-    cmp cl, target_word[1]
-    jb not_found_word
-    ;inc si      
+    ;cmp cl, target_word[1]
+    ;jb not_found_word
+        
 loop searching
  
 not_found_word:
+    cmp bx, 2
+    je exit
+    
+    mov bx, 1
     lea dx, notFoundMsg
     mov ah, 09h
     int 21h
+    
+exit:
+    mov bx, 1
     ret
     
 word_found:
@@ -204,6 +226,7 @@ word_found:
     pop cx
     xor bx, bx
  
+    mov bx, 2
     lea dx, foundMes
     mov ah, 09h
     int 21h
@@ -213,14 +236,37 @@ word_found:
 find_word endp
  
 insert_word proc
+    mov cl, input_string[1]
+    mov si, cx
+    mov [si+2], ' '
+    
+    mov di, cx
+    add di, 3
+    add si, 2
+    inc cx
+    
+    std
+    rep movsb
+    
     mov si, offset input_string + 2
+    mov [si], ' '
+    
+    mov cl, input_string[1]
+    inc cx
+    mov input_string[1], cl
+    cld
+    ; Now input_string prepared for searching target_word correctly
+    
     mov di, offset target_word + 2
     mov cl, input_string[1] ; Length of input_string
     
 inserting:
-    ;push cx
+    mov di, offset target_word + 2
     
     call find_word
+    cmp bx, 1
+    je end_inserting
+    
     ; SI now points to start of the target_word in input_string
     push si
     mov si, offset input_string
@@ -231,15 +277,15 @@ inserting:
     xor cx, cx
     mov cl, word_to_add[1]
     add di, cx
-    add di, 2 ; Now di points to the end of shifted input_string
+    add di, 3 ; Now di points to the end of shifted input_string
     
     mov cx, ax
     sub cx, si
-    add cx, 2 ; CX stores number of symbols to be shifted
+    add cx, 3 ; CX stores number of symbols to be shifted
     
     push si
     mov si, ax
-    inc si
+    add si, 2
     
     std
     rep movsb ; Shifting input_string
@@ -253,8 +299,19 @@ inserting:
     cld
     rep movsb ; Copying word_to_add to input_string
     
-    mov si, di
-    sub si, cx ; SI points to the place it pointed to at the start of the loop
+    mov si, di ; SI points to the end of word_to_add in input_string
+    mov cl, target_word[1]
+    add si, cx ; SI points to the end of target_word in input_string
+    
+    mov cl, word_to_add[1]
+    add cx, 2
+    add cl, input_string[1]
+    mov input_string[1], cl
+    
+    mov cl, input_string[1]
+    sub cx, si
+    cmp target_word[1], cl
+    jbe inserting
     
 end_inserting:
     ret
