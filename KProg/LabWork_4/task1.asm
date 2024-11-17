@@ -6,17 +6,20 @@
     currentSize dw 0
     min_old dw ?
     max_old dw ?
-    a dw ?
-    b dw ?
+    a dw 0
+    b dw 0
     buffer db 6, ?, 7 dup('$')
     newRangeMsg db 0dh, 0ah, "Enter lower and upper bound of new range: ", 0dh, 0ah, "$"
     newElementMsg db 0dh, 0ah, "Enter new element (enter b if you want to stop): ", 0dh, 0ah, "$"
     foundNotNumberError db 0dh, 0ah, "Enter a number please!", 0dh, 0ah, "$"
     foundDollarError db 0dh, 0ah, "Dollar sigh was found, enter a number please!", 0dh, 0ah, "$"
     emptyInputError db 0dh, 0ah, "Empty input, enter a number please!", 0dh, 0ah, "$"
+    upperLowerThanLowerMsg db 0dh, 0ah, "Upper bound is lower than or equal to lower bound, this is incorrect!", 0dh, 0ah, "$"
+    modifiedArrayMsg db 0dh, 0ah, "Modified array:", 0dh, 0ah, "$"
     newLine db 0dh, 0ah, "$"
 
 .code
+
 main proc
     mov ax, @data
     mov ds, ax
@@ -51,6 +54,16 @@ input_upper_bound:
     je input_upper_bound
     
     call stringToNumber
+    cmp ax, a
+    jg continue
+    
+    lea dx, upperLowerThanLowerMsg
+    mov ah, 09h
+    int 21h
+    
+    jmp input_upper_bound
+    
+continue:
     mov b, ax
 
     xor cx, cx
@@ -100,6 +113,7 @@ stop_input:
     mov ax, [si]
     mov min_old, ax
     mov max_old, ax
+    xor cx, cx
     mov cl, b.array[1]
     
 find_min_max:
@@ -125,25 +139,38 @@ skip_max:
     sub ax, min_old
     mov dx, ax
 
-    lea si, array
-    mov cx, 30
+    lea si, array + 2
+    mov cl, b.array[1]
     
 transform_loop:
     mov ax, [si]
     sub ax, min_old
+    push dx
     mul bx
-    div dx
+    pop dx
+    push bx
+    mov bx, dx
+    push dx
+    xor dx, dx
+    div bx
+    
+    
+    pop dx
+    pop bx
     add ax, a
     mov [si], ax
 
     add si, 2
 loop transform_loop
 
+    call outputArray
+
     mov ah, 4ch
     int 21h
     
 main endp
 
+; ------------ Functions block ---------------
 
 stringToNumber proc
     push si
@@ -227,6 +254,54 @@ check_input endp
 
 outputArray proc
     
+    lea dx, newLine
+    mov ah, 09h
+    int 21h
+    
+    lea dx, modifiedArrayMsg
+    mov ah, 09h
+    int 21h
+    
+    ; Initial setup for displaying the array
+    lea si, array + 2         ; Start from the first element in array (skip size)
+    xor cx, cx
+    mov cl, b.array[1]        ; Number of elements to display
+    
+display_loop:
+    mov ax, [si]              ; Load current array element into AX
+    push cx                   ; Save AX for the integer to string conversion
+    
+    ; Convert AX (the number) to a decimal string in buffer
+    lea di, buffer + 6        ; Set DI to buffer + 1 (skip the first byte which stores string length)
+    mov bx, 10                ; We will divide by 10 to convert to decimal
+    xor cx, cx                ; CX will hold the digit count
+
+convert_to_string:
+    xor dx, dx                ; Clear DX before dividing
+    div bx                    ; AX = AX / 10, remainder in DX (holds current digit)
+    add dl, '0'               ; Convert remainder to ASCII character
+    dec di                    ; Move back in buffer to store digit
+    mov [di], dl              ; Store digit in buffer
+    inc cx                    ; Increment digit count
+    test ax, ax               ; Check if AX is 0 (no more digits left)
+    jnz convert_to_string     ; If not, continue dividing
+
+    ;inc di
+    mov [buffer], cl          ; Set string length at the start of buffer
+    lea dx, di            ; Load buffer address in DX
+    mov ah, 09h               ; DOS function to display string
+    int 21h                   ; Call DOS interrupt to print the number
+    
+    ; Print newline after each number
+    lea dx, newLine           ; Address of newline string
+    mov ah, 09h               ; DOS function to display string
+    int 21h                   ; Call DOS interrupt to print the newline
+    
+    pop cx                    ; Restore AX to proceed with the next element
+    add si, 2                 ; Move to the next array element
+    loop display_loop         ; Repeat for all elements in array
+    
+    ret
 outputArray endp
 
 end main
