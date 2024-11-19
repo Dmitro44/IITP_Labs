@@ -17,6 +17,7 @@
     foundDollarError db 0dh, 0ah, "dollar sign was found in input string$"
     emptyInputError db 0dh, 0ah, "empty input string$"
     modifiedString db 0dh, 0ah, "modified string:$"
+    foundSpaceError db 0dh, 0ah, "string with only spaces$"
     newline db 0dh, 0ah, "$"
  
 .code
@@ -136,8 +137,12 @@ check_loop:
 check_dollar:
     cmp al, '$'
     je print_dollar_error
+    call space_and_tab_check
+    cmp di, 1
+    je end_check
     loop check_loop  ; Decrement CX and repeat if CX != 0
     
+    ;jmp print_space_error
     cmp cl, 0
     je end_check
  
@@ -161,10 +166,48 @@ empty_message:
     mov ah, 09h
     int 21h
     ret
+    
+print_space_error:
+    mov di, 1
+    lea dx, foundSpaceError
+    mov ah, 09h
+    int 21h
+    ret
  
 end_check:
     ret
 check_input endp
+
+
+space_and_tab_check proc
+    push si
+    push ax
+    push cx
+    ;sub cx, 2
+check_space_or_tab:
+    cmp al, ' '           ; Проверка на пробел
+    je check_next
+    cmp al, 9             ; Проверка на табуляцию
+    je check_next
+    jmp end_check_spaces  ; Если символ не пробел и не табуляция, выйти
+
+check_next:
+    lodsb
+    loop check_space_or_tab
+
+    pop cx
+    pop ax
+    pop si
+    jmp print_space_error ; Если все символы были пробелами или табуляциями
+
+end_check_spaces:
+    pop cx
+    pop ax
+    pop si
+    ret
+
+space_and_tab_check endp
+ 
  
 is_that_a_word proc
     jnz return 
@@ -186,6 +229,8 @@ has_space_before:
     mov al, [si]
     cmp al, ' '
     je word_found
+    add si, 2
+    ret
     
     
 is_that_a_word endp
