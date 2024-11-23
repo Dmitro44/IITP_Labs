@@ -3,22 +3,37 @@
 .data
     array dw 99, ?, 100 dup(0)
     maxArraySize db 99
-    currentSize dw 0
+    mult db 10
     min_old dw ?
     max_old dw ?
     a dw 0
     b dw 0
     buffer db 6, ?, 7 dup('$')
     newRangeMsg db 0dh, 0ah, "Enter lower and upper bound of new range: ", 0dh, 0ah, "$"
-    newElementMsg db 0dh, 0ah, "Enter new element (enter b if you want to stop): ", 0dh, 0ah, "$"
+    newElementMsg db 0dh, 0ah, "Enter new element (-127...127), 99 elements max (enter b if you want to stop): ", 0dh, 0ah, "$"
     foundNotNumberError db 0dh, 0ah, "Enter a number please!", 0dh, 0ah, "$"
     foundDollarError db 0dh, 0ah, "Dollar sigh was found, enter a number please!", 0dh, 0ah, "$"
     emptyInputError db 0dh, 0ah, "Empty input, enter a number please!", 0dh, 0ah, "$"
     upperLowerThanLowerMsg db 0dh, 0ah, "Upper bound is lower than or equal to lower bound, this is incorrect!", 0dh, 0ah, "$"
+    arraySizeErrorMsg db 0dh, 0ah, "Array should have at least 2 elements", 0dh, 0ah, "$"
     modifiedArrayMsg db 0dh, 0ah, "Modified array:", 0dh, 0ah, "$"
     newLine db 0dh, 0ah, "$"
 
 .code
+
+multiply macro reg
+    push dx
+    xor dx, dx
+    imul reg
+    pop dx
+endm
+
+division macro reg
+    push dx
+    xor dx, dx
+    idiv reg
+    pop dx
+endm
 
 main proc
     mov ax, @data
@@ -105,10 +120,22 @@ input_loop:
     
 loop input_loop
 
-; -------------- Main Logic ---------------
+jmp algorithm
+
+arraySizeError:
+    lea dx, arraySizeErrorMsg
+    mov ah, 09h
+    int 21h
+    jmp input_loop
 
 stop_input:
+    pop si
+    cmp cx, 97
+    jg arraySizeError
 
+; -------------- Main Logic ---------------
+
+algorithm:
     lea si, array + 2
     mov ax, [si]
     mov min_old, ax
@@ -133,31 +160,49 @@ skip_max:
 
     mov ax, b
     sub ax, a
-    mov bx, ax
+    mov bx, ax          ;difference a - b
 
     mov ax, max_old
     sub ax, min_old
-    mov dx, ax
+    mov dx, ax          ;difference max_old - min_old
 
     lea si, array + 2
     mov cl, b.array[1]
+    mov di, 10
     
 transform_loop:
     mov ax, [si]
     sub ax, min_old
-    push dx
-    mul bx
-    pop dx
-    push bx
-    mov bx, dx
-    push dx
-    xor dx, dx
-    div bx
+    
+	multiply di
+	multiply bx
+	
+	push bx
+	mov bx, dx
+	
+	push dx
+    
+    division bx
+    
+    push ax
+    ;push cx
+    
+rounding:
+    call get_last_digit
+    pop ax
+    division di
+    cmp dl, 5
+    jl cont_transf
     
     
+    inc ax    
+    
+cont_transf:
     pop dx
     pop bx
+    
     add ax, a
+    
     mov [si], ax
 
     add si, 2
@@ -174,6 +219,7 @@ main endp
 
 stringToNumber proc
     push si
+    push cx
     lea si, buffer + 2
     xor cx, cx
     mov cl, [si-1]
@@ -193,6 +239,7 @@ convert_loop:
 loop convert_loop
 
 end_convert:
+    pop cx
     pop si
     ret
     
@@ -251,6 +298,34 @@ end_check:
     ret
 check_input endp
 
+get_first_digit proc
+    cmp dx, 0
+    jl  end_function
+
+loop_divide:
+    cmp dx, 10
+    jl  end_function
+
+    mov ax, dx
+    xor dx, dx
+    mov cx, 10
+    div cx
+    mov dx, ax
+    jmp loop_divide
+
+end_function:
+    ret
+
+get_first_digit endp
+
+
+get_last_digit proc
+    xor dx, dx
+    idiv di
+    
+    ret
+get_last_digit endp
+
 
 outputArray proc
     
@@ -272,7 +347,7 @@ display_loop:
     push cx                   ; Save AX for the integer to string conversion
     
     ; Convert AX (the number) to a decimal string in buffer
-    lea di, buffer + 6        ; Set DI to buffer + 1 (skip the first byte which stores string length)
+    lea di, buffer + 7        ; Set DI to buffer + 1 (skip the first byte which stores string length)
     mov bx, 10                ; We will divide by 10 to convert to decimal
     xor cx, cx                ; CX will hold the digit count
 
