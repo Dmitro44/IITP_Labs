@@ -16,7 +16,9 @@
     emptyInputError db 0dh, 0ah, "Empty input, enter a number please!", 0dh, 0ah, "$"
     upperLowerThanLowerMsg db 0dh, 0ah, "Upper bound is lower than or equal to lower bound, this is incorrect!", 0dh, 0ah, "$"
     arraySizeErrorMsg db 0dh, 0ah, "Array should have at least 2 elements", 0dh, 0ah, "$"
+    outOfRangeMsg db 0dh, 0ah, "Error: Value must be between -127 and 127", 0dh, 0ah, "$"
     modifiedArrayMsg db 0dh, 0ah, "Modified array:", 0dh, 0ah, "$"
+    minusSign db "-$"
     newLine db 0dh, 0ah, "$"
 
 .code
@@ -53,6 +55,10 @@ input_lower_bound:
     je input_lower_bound
     
     call stringToNumber
+    call show_out_of_range
+    cmp di, 1
+    je input_lower_bound
+    
     mov a, ax
     
     lea dx, newLine
@@ -69,6 +75,10 @@ input_upper_bound:
     je input_upper_bound
     
     call stringToNumber
+    call show_out_of_range
+    cmp di, 1
+    je input_upper_bound
+    
     cmp ax, a
     jg continue
     
@@ -107,6 +117,11 @@ input_loop:
     je input_loop
     
     call stringToNumber
+    call show_out_of_range
+    cmp di, 1
+    je input_loop
+    
+    
     mov [si], ax
     
     push cx
@@ -174,7 +189,7 @@ transform_loop:
     mov ax, [si]
     sub ax, min_old
     
-	multiply di
+	;multiply di
 	multiply bx
 	
 	push bx
@@ -182,20 +197,36 @@ transform_loop:
 	
 	push dx
     
-    division bx
+    ;division bx
+    xor dx, dx
+    idiv bx
+    
+    ;multiply di
     
     push ax
+    mov ax, dx
+    xor dx, dx
+    imul di
+    idiv bx
+    
     ;push cx
     
 rounding:
-    call get_last_digit
+    ;call get_last_digit
+;    pop ax
+;    division di
+    cmp al, 5
     pop ax
-    division di
-    cmp dl, 5
     jl cont_transf
     
     
-    inc ax    
+    cmp ax, 0
+    jl hui
+    inc ax
+    jmp cont_transf
+    
+hui:
+    dec ax    
     
 cont_transf:
     pop dx
@@ -217,6 +248,24 @@ main endp
 
 ; ------------ Functions block ---------------
 
+show_out_of_range proc
+    cmp ax, -127
+    jl oor
+    cmp ax, 127
+    jg oor
+    
+    ret
+    
+oor:
+    push ax
+    mov di, 1
+    lea dx, outOfRangeMsg
+    mov ah, 09h
+    int 21h
+    pop ax
+    ret
+show_out_of_range endp
+
 stringToNumber proc
     push si
     push cx
@@ -224,7 +273,20 @@ stringToNumber proc
     xor cx, cx
     mov cl, [si-1]
     mov ax, 0
+    
+    xor bx, bx
+    
+    mov al, [si]
+    cmp al, '-'
+    jne positive_number
+    inc si
+    dec cl
+    mov bx, 1    
 
+
+positive_number:
+    push bx
+    xor ax, ax
 convert_loop:
     mov bl, [si]
 
@@ -237,6 +299,11 @@ convert_loop:
 
     inc si
 loop convert_loop
+
+    pop bx
+    cmp bx, 1
+    jne end_convert
+    neg ax
 
 end_convert:
     pop cx
@@ -253,70 +320,66 @@ check_input proc
     cmp cx, 0                 ; Проверка на пустую строку
     je empty_message
 
+    mov al, [si]               ; Load the first character
+    cmp al, '-'                ; Check if the first character is a minus sign
+    jne check_digits           ; If not, go to digit-checking loop
+
+    ; If the first character is '-', allow it, but ensure no other minus signs
+    inc si                     ; Move to the next character
+    dec cx                     ; Decrease the count of remaining characters
+    cmp cx, 0                  ; Check if there's anything left after the minus sign
+    je print_NotNumber_error   ; If nothing after '-', show error
+
+check_digits:
+    ; Loop through each character to ensure all are digits
 check_loop:
-    lodsb                      ; Загрузка символа в AL
-    cmp al, '0'                ; Проверка, меньше ли символ '0'
-    jl check_dollar
-    cmp al, '9'                ; Проверка, больше ли символ '9'
-    jle continue_check
+    lodsb                      ; Load next character into AL
+    cmp al, '-'                ; Check if there's an additional minus sign
+    je print_NotNumber_error   ; If another minus is found, show error
+    cmp al, '0'                ; Check if it's below '0'
+    jl print_NotNumber_error   ; If below '0', show error
+    cmp al, '9'                ; Check if it's above '9'
+    jg print_NotNumber_error   ; If above '9', show error
 
-check_dollar:
-    cmp al, '$'                ; Проверка на символ '$'
-    je print_dollar_error      ; Если найден '$', перейти к выводу ошибки
+    loop check_loop            ; Decrement CX and repeat until CX = 0
 
-    ; Если символ не число и не '$', то это ошибка
-    jmp print_NotNumber_error
-
-continue_check:
-    loop check_loop            ; Уменьшение CX и повторение цикла, если CX != 0
-
-    cmp cx, 0
-    je end_check
+    ret                        ; Return with di = 0 (no error)
 
 print_NotNumber_error:
-    mov di, 1
+    mov di, 1                  ; Set error flag
     lea dx, foundNotNumberError
     mov ah, 09h
     int 21h
     ret
 
-print_dollar_error:
-    mov di, 1
-    lea dx, foundDollarError
-    mov ah, 09h
-    int 21h
-    ret
-
 empty_message:
-    mov di, 1
+    mov di, 1                  ; Set error flag
     lea dx, emptyInputError
     mov ah, 09h
     int 21h
     ret
-
-end_check:
-    ret
+    
 check_input endp
 
-get_first_digit proc
-    cmp dx, 0
-    jl  end_function
-
-loop_divide:
-    cmp dx, 10
-    jl  end_function
-
-    mov ax, dx
-    xor dx, dx
-    mov cx, 10
-    div cx
-    mov dx, ax
-    jmp loop_divide
-
-end_function:
-    ret
-
-get_first_digit endp
+;get_first_digit proc
+;    cmp dx, 0
+;    jl  end_function
+;
+;loop_divide:
+;    cmp dx, 10
+;    jl  end_function
+;
+;    mov ax, dx
+;    xor dx, dx
+;    mov cx, 10
+;    div cx
+;    mov dx, ax
+;    jmp loop_divide
+;
+;end_function:
+;    ret
+;
+;get_first_digit endp
 
 
 get_last_digit proc
@@ -346,6 +409,17 @@ display_loop:
     mov ax, [si]              ; Load current array element into AX
     push cx                   ; Save AX for the integer to string conversion
     
+    ;Check for negative number
+    cmp ax, 0
+    jge display_positive
+    push ax
+    lea dx, minusSign
+    mov ah, 09h
+    int 21h
+    pop ax
+    neg ax                  
+    
+display_positive:
     ; Convert AX (the number) to a decimal string in buffer
     lea di, buffer + 7        ; Set DI to buffer + 1 (skip the first byte which stores string length)
     mov bx, 10                ; We will divide by 10 to convert to decimal
