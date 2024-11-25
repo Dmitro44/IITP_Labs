@@ -8,7 +8,7 @@
     max_old dw ?
     a dw 0
     b dw 0
-    buffer db 4, ?, 5 dup('$')
+    buffer db 5, ?, 6 dup('$')
     newRangeMsg db 0dh, 0ah, "Enter lower and upper bound of new range (-127..127): ", 0dh, 0ah, "$"
     newElementMsg db 0dh, 0ah, "Enter new element (-127...127), 99 elements max (enter b if you want to stop): ", 0dh, 0ah, "$"
     foundNotNumberError db 0dh, 0ah, "Enter a number please!", 0dh, 0ah, "$"
@@ -425,13 +425,13 @@ outputArray proc
     int 21h
     
     ; Initial setup for displaying the array
-    lea si, array + 2         ; Start from the first element in array (skip size)
+    lea si, array + 2
     xor cx, cx
-    mov cl, b.array[1]        ; Number of elements to display
+    mov cl, b.array[1]
     
 display_loop:
-    mov ax, [si]              ; Load current array element into AX
-    push cx                   ; Save AX for the integer to string conversion
+    mov ax, [si]
+    push cx
     
     ;Check for negative number
     cmp ax, 0
@@ -445,7 +445,7 @@ display_loop:
     
 display_positive:
     ; Convert AX (the number) to a decimal string in buffer
-    lea di, buffer + 5        ; Set DI to buffer + 1 (skip the first byte which stores string length)
+    lea di, buffer + 6        ; Set DI to buffer + 1 (skip the first byte which stores string length)
     mov bx, 10                ; We will divide by 10 to convert to decimal
     xor cx, cx                ; CX will hold the digit count
 
@@ -459,20 +459,19 @@ convert_to_string:
     test ax, ax               ; Check if AX is 0 (no more digits left)
     jnz convert_to_string     ; If not, continue dividing
 
-    ;inc di
     mov [buffer], cl          ; Set string length at the start of buffer
-    lea dx, di            ; Load buffer address in DX
-    mov ah, 09h               ; DOS function to display string
-    int 21h                   ; Call DOS interrupt to print the number
+    lea dx, di                ; Load buffer address in DX
+    mov ah, 09h               
+    int 21h
     
     ; Print newline after each number
-    lea dx, newLine           ; Address of newline string
-    mov ah, 09h               ; DOS function to display string
-    int 21h                   ; Call DOS interrupt to print the newline
+    lea dx, newLine
+    mov ah, 09h
+    int 21h
     
-    pop cx                    ; Restore AX to proceed with the next element
-    add si, 2                 ; Move to the next array element
-    loop display_loop         ; Repeat for all elements in array
+    pop cx
+    add si, 2
+    loop display_loop
     
     ret
 outputArray endp
