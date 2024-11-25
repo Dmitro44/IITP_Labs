@@ -8,8 +8,8 @@
     max_old dw ?
     a dw 0
     b dw 0
-    buffer db 6, ?, 7 dup('$')
-    newRangeMsg db 0dh, 0ah, "Enter lower and upper bound of new range: ", 0dh, 0ah, "$"
+    buffer db 4, ?, 5 dup('$')
+    newRangeMsg db 0dh, 0ah, "Enter lower and upper bound of new range (-127..127): ", 0dh, 0ah, "$"
     newElementMsg db 0dh, 0ah, "Enter new element (-127...127), 99 elements max (enter b if you want to stop): ", 0dh, 0ah, "$"
     foundNotNumberError db 0dh, 0ah, "Enter a number please!", 0dh, 0ah, "$"
     foundDollarError db 0dh, 0ah, "Dollar sigh was found, enter a number please!", 0dh, 0ah, "$"
@@ -172,7 +172,30 @@ skip_min:
 skip_max:
     add si, 2
     loop find_min_max
+    
+    ; Check if all array elements are equal
+    mov ax, min_old
+    cmp ax, max_old
+    jne default                 ; If min_old and max_old are different, proceed to standard transformation
 
+    ; If all elements are equal, set all to the middle of the new range
+    mov ax, a                   ; Load lower bound of new range into AX
+    add ax, b                   ; AX = a + b
+    sar ax, 1                   ; AX = (a + b) / 2 (shift right for division by 2)
+
+    ; Assign the midpoint value to all array elements
+    lea si, array + 2           ; Point SI to the start of the array (skip size element)
+    mov cl, b.array[1]          ; Load the number of elements in CL
+
+fill_with_middle:
+    mov [si], ax                ; Set the current element to the midpoint
+    add si, 2                   ; Move to the next element
+    loop fill_with_middle       ; Repeat for all elements
+
+    call outputArray            ; Skip transformation and go to array output
+    jmp exit_program
+
+default:
     mov ax, b
     sub ax, a
     mov bx, ax          ;difference a - b
@@ -240,7 +263,8 @@ cont_transf:
 loop transform_loop
 
     call outputArray
-
+    
+exit_program:
     mov ah, 4ch
     int 21h
     
@@ -421,7 +445,7 @@ display_loop:
     
 display_positive:
     ; Convert AX (the number) to a decimal string in buffer
-    lea di, buffer + 7        ; Set DI to buffer + 1 (skip the first byte which stores string length)
+    lea di, buffer + 5        ; Set DI to buffer + 1 (skip the first byte which stores string length)
     mov bx, 10                ; We will divide by 10 to convert to decimal
     xor cx, cx                ; CX will hold the digit count
 
