@@ -86,8 +86,9 @@ main ENDP
 ;--------------- Functions block -------------------
 
 ProcessFile PROC
-    ;push cx
-    lea dx, bufferForCmd + 2       ;Buffer for line
+    
+    mov bufferForCmd[2], ' '
+    lea dx, bufferForCmd + 3       ;Buffer for line
     mov bx, inputHandler
 readChar:
     
@@ -110,7 +111,6 @@ doneReading:
     
     call SearchWord
     
-    ;pop cx
     cmp al, 0
     je ProcessNextLine
     
@@ -118,13 +118,12 @@ doneReading:
     mov bx, outputHandler
     xor cx, cx
     mov cl, bufferForCmd[1]
-    lea dx, bufferForCmd + 2
+    lea dx, bufferForCmd + 3
     int 21h
     
 ProcessNextLine:
     call ClearBufferForCmd
     
-    ;mov bufferForCmd[1], 0
     lea dx, bufferForCmd + 2
     mov bx, inputHandler
     jmp ReadChar
@@ -172,7 +171,7 @@ Found:
     
     cmp [si], ' '
     je checkSpaceBefore
-    cmp [si], 0ah
+    cmp [si], 0dh
     je checkSpaceBefore
     
     jmp WordNotBounded
@@ -182,7 +181,7 @@ checkSpaceBefore:
     dec si
     cmp [si], ' '
     je WordBounded
-    lea di, bufferForCmd[1]
+    lea di, bufferForCmd[2]
     cmp [si], di
     je WordBounded
     
@@ -198,8 +197,8 @@ SearchWord ENDP
 
 
 ClearBufferForCmd PROC
-    lea di, bufferForCmd
-    mov cx, 102
+    lea di, bufferForCmd + 1
+    mov cx, 101
     xor al, al
     rep stosb
     ret
