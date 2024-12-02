@@ -12,6 +12,7 @@
     usageError db 'Usage: program.exe <input file> <output file> <word>', 0dh, 0ah, '$'
     noArgProvided db 'Not all arguments provided', 0dh, 0ah, '$'
     fileNotFoundError db 'Error: Input file not found!', 0dh, 0ah, '$'
+    wordToFindErrorMsg db 'Error: Word is incorrect!', 0dh, 0ah, '$'
     
 .code
 
@@ -28,7 +29,7 @@ readFromCmd:
     rep movsb
     
     mov ds, ax
-    mov byte ptr [di], '$'
+    mov byte ptr [di], 0dh
     
     call ParseArguments
     cmp cl, 3
@@ -42,9 +43,14 @@ readFromCmd:
     
     mov inputHandler, ax              ;Store the file handle of input file
     
-    lea dx, outputFileName
-    mov ah, 3Dh
-    mov al, 2
+;    lea dx, outputFileName         ;Use this code in emu8086 because 5Bh interrupt doesn't work in emu
+;    mov ah, 3Dh
+;    mov al, 2
+;    int 21h
+
+    lea dx, outputfilename
+    mov ah, 5Bh                     ;this interrupt works in dosbox and doesn't work in emu8086
+    mov al, 7
     int 21h
     
     mov outputHandler, ax              ;Store the file handle of output file
@@ -76,14 +82,112 @@ FileNotFound:
     int 21h
     jmp Exit
     
+WordToFindError:
+    lea dx, wordToFindErrorMsg
+    mov ah, 09h
+    int 21h
+    jmp ShowUsage
+    
     ;Exit program
 Exit:
+
+    mov ah, 3Eh
+    mov bx, inputHandler
+    int 21h
+    
+    mov ah, 3Eh
+    mov bx, outputHandler
+    int 21h
+
     mov ah, 4Ch
     int 21h
     
 main ENDP
 
 ;--------------- Functions block -------------------
+
+ParseArguments PROC
+    xor cx, cx              ; Clear CX to start counting arguments
+    lea si, bufferForCmd + 2
+    lea di, inputFileName
+    call GetNextArg         ; Read the first argument
+    cmp al, 0
+    je NoArgError
+    
+    inc cx                  ; Increment argument count if parsed successfully
+    lea di, outputFileName
+    call GetNextArg         ; Read the second argument
+    cmp al, 0
+    je NoArgError
+    
+    inc cx                  ; Increment argument count if parsed successfully
+    lea di, wordToFind
+    call GetNextArg         ; Read the third argument
+    
+    lea si, wordToFind
+    call checkWordToFind
+    cmp al, 0
+    je WordToFindError
+    
+    mov byte ptr [di], "$"
+    cmp al, 0
+    je NoArgError
+    
+    inc cx                  ; Increment argument count if parsed successfully
+    ret
+    
+ParseArguments ENDP
+
+GetNextArg PROC
+    ; Input: SI = address in bufferForCmd, DI = destination buffer
+    ; Output: Word stored in destination buffer, SI updated
+    push di
+    xor al, al              ; Clear AL to indicate failure initially
+
+CheckFirstSpace:
+    cmp byte ptr [si], ' '
+    jne ShowUsage
+    
+    inc si
+    
+ReadLoop:
+    lodsb                    ; Load byte from buffer into AL
+    cmp al, ' '              ; Check if itâ€™s a space
+    je CheckIfLastArg
+    cmp al, 0dh                
+    je EndArg                ; If end of string, exit
+    stosb                    ; Store the character in the destination buffer
+    jmp ReadLoop           ; Continue until space or end of string
+    
+CheckIfLastArg:
+    cmp cx, 2
+    jne EndArg
+    
+    stosb
+    
+ReadToEnd:
+    lodsb
+    cmp al, 0dh
+    je EndArg
+    stosb
+    jmp ReadToEnd
+
+EndArg:
+    mov ax, di
+    pop di
+    cmp di, ax
+    je NoArg                 ; If no argument (di didn't move), no valid argument
+
+    mov di, ax
+    mov al, 1                ; Set AL to 1 to indicate success
+    dec si
+    ret
+
+NoArg:
+    xor al, al               ; Set AL to 0 to indicate failure
+    dec si
+    ret
+GetNextArg ENDP
 
 ProcessFile PROC
     
@@ -123,17 +227,13 @@ doneReading:
     
 ProcessNextLine:
     call ClearBufferForCmd
-    
-    lea dx, bufferForCmd + 2
-    mov bx, inputHandler
-    jmp ReadChar
+
+    jmp ProcessFile
     
 EndOfFile:
     ret    
     
 ProcessFile ENDP
-
-
 
 SearchWord PROC
     xor al, al                ; Clear AL to 0 (not found)
@@ -166,12 +266,10 @@ ResetWordPointer:
     xor cx, cx
     jmp SearchLoop
 
-
-Found:
-    
-    cmp [si], ' '
+Found:    
+    cmp byte ptr [si], ' '
     je checkSpaceBefore
-    cmp [si], 0dh
+    cmp byte ptr [si], 0dh
     je checkSpaceBefore
     
     jmp WordNotBounded
@@ -179,15 +277,18 @@ Found:
 checkSpaceBefore:
     sub si, cx
     dec si
-    cmp [si], ' '
+    cmp byte ptr [si], ' '
     je WordBounded
     lea di, bufferForCmd[2]
     cmp [si], di
     je WordBounded
     
+    add si, cx
+    inc si
+    
 WordNotBounded:
-    xor al, al
-    ret
+    
+    jmp ResetWordPointer
     
 WordBounded:
     mov al, 1
@@ -205,66 +306,25 @@ ClearBufferForCmd PROC
 ClearBufferForCmd ENDP
 
 
-ParseArguments PROC
-    xor cx, cx              ; Clear CX to start counting arguments
-    lea si, bufferForCmd + 2
-    lea di, inputFileName
-    call GetNextArg         ; Read the first argument
-    cmp al, 0
-    je NoArgError
+checkWordToFind PROC
     
-    inc cx                  ; Increment argument count if parsed successfully
-    lea di, outputFileName
-    call GetNextArg         ; Read the second argument
-    cmp al, 0
-    je NoArgError
-    
-    inc cx                  ; Increment argument count if parsed successfully
-    lea di, wordToFind
-    call GetNextArg         ; Read the third argument
-    mov [di], "$"
-    cmp al, 0
-    je NoArgError
-    
-    inc cx                  ; Increment argument count if parsed successfully
-    ret
-    
-ParseArguments ENDP
+check_loop:
+    lodsb
+    cmp al, 0           
+    je valid
+    cmp al, 20h        
+    je reject           
+    cmp al, 09h        
+    je reject           
+    jmp check_loop      
 
-GetNextArg PROC
-    ; Input: SI = address in bufferForCmd, DI = destination buffer
-    ; Output: Word stored in destination buffer, SI updated
-    push di
-    xor al, al              ; Clear AL to indicate failure initially
-
-CheckFirstSpace:
-    cmp byte ptr [si], ' '
-    jne ShowUsage
-    
-    inc si
-    
-ReadLoop:
-    lodsb                    ; Load byte from buffer into AL
-    cmp al, ' '              ; Check if it’s a space
-    je EndArg            ; If space, skip it
-    cmp al, '$'                ; Check if end of string (null terminator)
-    je EndArg                ; If end of string, exit
-    stosb                    ; Store the character in the destination buffer
-    jmp ReadLoop           ; Continue until space or end of string
-
-EndArg:
-    mov ax, di
-    pop di
-    cmp di, ax
-    je NoArg                 ; If no argument (di didn't move), no valid argument
-
-    mov di, ax
-    mov al, 1                ; Set AL to 1 to indicate success
-    dec si
+valid:
+    mov ax, 1           
     ret
 
-NoArg:
-    xor al, al               ; Set AL to 0 to indicate failure
-    dec si
-    ret
-GetNextArg ENDP
+reject:
+    mov ax, 0           
+    ret 
+checkWordToFind ENDP
+
+end
