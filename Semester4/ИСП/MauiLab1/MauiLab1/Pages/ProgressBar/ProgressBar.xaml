@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiLab1.Pages.ProgressBar.ProgressBar">
+    <Grid ColumnSpacing="5" RowSpacing="5" RowDefinitions="*, *, *" ColumnDefinitions="*, *">
+        <Label x:Name="InfoLabel" Text="" FontSize="20" Grid.Row="0" Grid.ColumnSpan="2" HorizontalOptions="Center"/>
+        
+        <Grid ColumnDefinitions="*,Auto" Grid.Row="1" Grid.ColumnSpan="2" Padding="30">
+            <ProgressBar x:Name="ProgBar" Margin="20" VerticalOptions="Center"/>
+            
+            <Label x:Name="PercentageLabel" Text="0%" Grid.Column="1" WidthRequest="70" FontSize="16" VerticalOptions="Center"/>
+        </Grid>
+        
+        <Button x:Name="StartButton" Text="Start" FontSize="20" Grid.Row="2" Grid.Column="0" Margin="30, 30, 10, 30" Clicked="OnStartButtonClicked"/>
+        
+        <Button x:Name="CancelButton" Text="Cancel" FontSize="20" Grid.Row="2" Grid.Column="1" Margin="10, 30, 30, 30" Clicked="OnCancelButtonClicked"/>
+    </Grid>
+</ContentPage>

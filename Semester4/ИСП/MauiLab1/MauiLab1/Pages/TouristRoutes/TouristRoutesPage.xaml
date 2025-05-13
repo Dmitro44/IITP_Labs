@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Loaded="OnPageLoaded"
+             x:Class="MauiLab1.Pages.TouristRoutes.TouristRoutesPage">
+    
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30">
+            <Picker x:Name="RoutePicker"
+                    Title="Выберите маршрут"
+                    SelectedIndexChanged="OnRouteSelected"
+                    Margin="10,0"
+                    TextColor="White"
+                    BackgroundColor="Grey"/>
+            
+            <Label
+                x:Name="SelectedRouteInfo"
+                FontSize="16" />
+
+            <Label
+                x:Name="AttractionsLabel"
+                FontSize="16" />
+
+            <CollectionView
+                x:Name="AttractionsCollection"
+                IsVisible="False">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Margin="5" Padding="10">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" />
+                                <Label Text="{Binding Type, StringFormat='Тип: {0}'}" />
+                                <Label Text="{Binding Address, StringFormat='Адрес: {0}'}" />
+                                <Label Text="{Binding VisitDurationMinutes, StringFormat='Время посещения: {0} мин.'}" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

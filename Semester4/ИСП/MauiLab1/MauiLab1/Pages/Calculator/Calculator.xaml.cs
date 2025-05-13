@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MauiLab1.Pages.Calculator;
 
@@ -54,12 +49,17 @@ public partial class Calculator : ContentPage
     private void OnMemoryClearButtonClicked(object sender, EventArgs e)
     {
         _memory = 0;
+        _expressionInput = "";
+        UpdateExpressionDisplay();
     }
 
     private void OnMemoryReadButtonClicked(object sender, EventArgs e)
     {
         _currentInput = _memory.ToString(CultureInfo.InvariantCulture);
+        _expressionInput = "";
+        _firstOperand = _memory;
         UpdateDisplay();
+        UpdateExpressionDisplay();
     }
 
     private void OnMemoryAddButtonClicked(object sender, EventArgs e)
@@ -148,9 +148,14 @@ public partial class Calculator : ContentPage
     {
         if (double.TryParse(_currentInput, out double result))
         {
+            _expressionInput = $"1/({_currentInput}) =";
+            UpdateExpressionDisplay();
+            
             result = Math.Round(1 / result, 10);
             _currentInput = result.ToString(CultureInfo.CurrentCulture);
             UpdateDisplay();
+            
+            _isNewInput = true;
         }
     }
 
@@ -158,11 +163,14 @@ public partial class Calculator : ContentPage
     {
         if (double.TryParse(_currentInput, out double result))
         {
+            _expressionInput = $"sqr({_currentInput}) =";
+            UpdateExpressionDisplay();
+            
             result = Math.Round(Math.Pow(result, 2), 6);
             _currentInput = result.ToString(CultureInfo.CurrentCulture);
-
-            
             UpdateDisplay();
+            
+            _isNewInput = true;
         }
     }
 
@@ -172,6 +180,9 @@ public partial class Calculator : ContentPage
         {
             if (result >= 0)
             {
+                _expressionInput = $"√({_currentInput}) =";
+                UpdateExpressionDisplay();
+                
                 result = Math.Round(Math.Sqrt(result), 10);
                 _currentInput = result.ToString(CultureInfo.CurrentCulture);
             }
@@ -180,6 +191,8 @@ public partial class Calculator : ContentPage
                 _currentInput = "Err";
             }
             UpdateDisplay();
+            
+            _isNewInput = true;
         }
     }
 
@@ -187,6 +200,11 @@ public partial class Calculator : ContentPage
     {
         Button button = (Button)sender;
         string operation = button.Text;
+
+        if (ResultLabel.Text != _firstOperand.ToString())
+        {
+            OnEqualButtonClicked(sender, e);
+        }
         
         _firstOperand = double.Parse(_currentInput);
 
@@ -204,6 +222,10 @@ public partial class Calculator : ContentPage
             number = -number;
             _currentInput = number.ToString(CultureInfo.CurrentCulture);
             
+            if (_isNewInput)
+            {
+                _firstOperand = number;
+            }
         }
         
         UpdateExpressionDisplay();
@@ -275,10 +297,14 @@ public partial class Calculator : ContentPage
     {
         if (double.TryParse(_currentInput, out double result))
         {
+            _expressionInput = $"e^({_currentInput}) =";
+            UpdateExpressionDisplay();
+            
             result = Math.Exp(result);
             _currentInput = result.ToString(CultureInfo.CurrentCulture);
-            
             UpdateDisplay();
+            
+            _isNewInput = true;
         }
     }
 }

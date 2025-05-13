@@ -5,14 +5,28 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:MauiLab1"
     xmlns:calculator="clr-namespace:MauiLab1.Pages.Calculator"
-    Shell.FlyoutBehavior="Flyout"
+    xmlns:progressBar="clr-namespace:MauiLab1.Pages.ProgressBar"
+    xmlns:touristRoutes="clr-namespace:MauiLab1.Pages.TouristRoutes"
+    xmlns:converter="clr-namespace:MauiLab1.Pages.CurrencyConverter"
+    FlyoutBehavior="Flyout"
     Title="MauiLab1"
+    ForegroundColor="White"
     BackgroundColor="#F3F3F3">
     
-    <ShellContent
-        Title="Calculator"
-        ContentTemplate="{DataTemplate calculator:Calculator}"
-        Route="CalculatorPage"
-        />
+    <FlyoutItem Title="Calculator" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent Route="CalculatorPage" ContentTemplate="{DataTemplate calculator:Calculator}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="ProgressBar" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent Route="ProgressBarPage" ContentTemplate="{DataTemplate progressBar:ProgressBar}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Tourist Routes" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent Route="TouristRoutesPage" ContentTemplate="{DataTemplate touristRoutes:TouristRoutesPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Currency Converter" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent Route="CurrencyConverterPage" ContentTemplate="{DataTemplate converter:CurrencyConverterPage}" />
+    </FlyoutItem>
 
 </Shell>
